@@ -1,0 +1,53 @@
+version: "3"
+
+services:
+
+  php:
+    #image: php:7-fpm
+    build:
+      context: ./docker
+      dockerfile: php
+    image: andersonb/php-telesaude
+    environment:
+#      XDEBUG_CONFIG: remote_host=host.docker.internal
+      XDEBUG_CONFIG: client_host=192.168.20.131
+    volumes:
+      - ./:/var/www/telesaude
+      - ./docker/www.conf:/usr/local/etc/php-fpm.d/zz-www.conf
+      - "phpsocket:/var/run/php"
+    networks:
+      - telesaude
+#  db:
+#    image: postgres:10
+#    environment:
+#      POSTGRES_PASSWORD: "docker"
+#    ports:
+#      - 5432:5432
+#    command:
+#      - "postgres"
+#      - "-c"
+#      - "datestyle=ISO, DMY"
+#    volumes:
+#      - ./pgdata10:/var/lib/postgresql/data
+#    networks:
+#      - telesaude
+
+  web:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+      - 443:443
+    volumes:
+      - ./:/var/www/telesaude:rw
+      - ./docker/telesaude.conf:/etc/nginx/conf.d/telesaude.conf
+      - ./proxy/certs:/etc/nginx/certs
+      - "phpsocket:/var/run/php"
+    networks:
+      - telesaude
+
+networks:
+  telesaude:
+    driver: bridge
+
+volumes:
+  phpsocket:
